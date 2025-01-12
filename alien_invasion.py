@@ -3,6 +3,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
+from Alien import Alien
 
 
 class AlienInvasion:
@@ -23,12 +24,16 @@ class AlienInvasion:
 
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
+        self.aliens = pygame.sprite.Group()
+
+        self._create_fleet()
 
     def run_game(self):
         while True:
             self._check_events()
             self.ship.update()
             self._update_bullets()
+            self._update_aliens()
             self._update_screen()
             self.clock.tick(60)
 
@@ -62,8 +67,44 @@ class AlienInvasion:
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
         self.ship.blitme()
+        self.aliens.draw(self.screen)
 
         pygame.display.flip()
+
+    def _update_aliens(self):
+        self._check_fleet_edges()
+        self.aliens.update()
+
+    def _create_fleet(self):
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.size
+
+        current_y = alien_height
+        while current_y < (self.settings.screen_height - 4 * alien_height):
+            current_x = alien_width
+            while current_x < (self.settings.screen_width - 2 * alien_width):
+                self._create_alien(current_x, current_y)
+                current_x += 2 * alien_width
+            current_y += 2 * alien_height
+
+    def _create_alien(self, left_margin, top_margin):
+        new_alien = Alien(self)
+        new_alien.x = left_margin
+        new_alien.y = top_margin
+        new_alien.rect.x = left_margin
+        new_alien.rect.y = top_margin
+        self.aliens.add(new_alien)
+
+    def _check_fleet_edges(self):
+        for alien in self.aliens:
+            if alien.check_edges():
+                self._change_fleet_direction()
+                break
+
+    def _change_fleet_direction(self):
+        for alien in self.aliens:
+            alien.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
 
     def _update_bullets(self):
         self.bullets.update()
