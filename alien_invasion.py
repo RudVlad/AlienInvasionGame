@@ -1,9 +1,11 @@
 import sys
+from time import sleep
 import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
 from Alien import Alien
+from game_stats import GameStats
 
 
 class AlienInvasion:
@@ -21,7 +23,9 @@ class AlienInvasion:
         # self.settings.screen_height = self.screen.get_rect().height
 
         pygame.display.set_caption("Alien Invasion")
+        self.game_active = True
 
+        self.game_stats = GameStats(self)
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
@@ -31,9 +35,12 @@ class AlienInvasion:
     def run_game(self):
         while True:
             self._check_events()
-            self.ship.update()
-            self._update_bullets()
-            self._update_aliens()
+
+            if self.game_active:
+                self.ship.update()
+                self._update_bullets()
+                self._update_aliens()
+
             self._update_screen()
             self.clock.tick(60)
 
@@ -74,6 +81,11 @@ class AlienInvasion:
     def _update_aliens(self):
         self._check_fleet_edges()
         self.aliens.update()
+
+        if pygame.sprite.spritecollideany(self.ship, self.aliens) :
+            print(f"Ship is destroyed!")
+            self._ship_hit()
+        self._check_aliens_bottom()
 
     def _create_fleet(self):
         alien = Alien(self)
@@ -122,10 +134,29 @@ class AlienInvasion:
             self.bullets.empty()
             self._create_fleet()
 
+    def _check_aliens_bottom(self):
+        for alien in self.aliens.sprites():
+            if alien.rect.bottom >= self.settings.screen_height:
+                self._ship_hit()
+                break
+
     def _fire_bullet(self):
         if len(self.bullets.sprites()) < self.settings.bullets_allowed:
             new_bullet = Bullet(self)
             self.bullets.add(new_bullet)
+
+    def _ship_hit(self):
+        self.game_stats.ships_left -= 1
+        if self.game_stats.ships_left <= 0:
+            self.game_active = False
+        else:
+            self.bullets.empty()
+            self.aliens.empty()
+
+            self._create_fleet()
+            self.ship.center_ship()
+
+            sleep(0.8)
 
 
 if __name__ == '__main__':
