@@ -75,6 +75,9 @@ class AlienInvasion:
             self._create_fleet()
             self.ship.center_ship()
 
+            #self.sb.prep_level()
+            #self.sb.prep_ships()
+
             pygame.mouse.set_visible(False)
 
     def _check_keydown_events(self, event):
@@ -190,6 +193,7 @@ class AlienInvasion:
             self.game_active = False
             pygame.mouse.set_visible(True)
         else:
+            self.sb.prep_ships()
             self.bullets.empty()
             self.aliens.empty()
 
